@@ -4,6 +4,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Nav, Navbar, Container } from 'react-bootstrap';
+import sedan from '../src/assets/car.png';
+import suv from '../src/assets/SUV.jpg';
+import performance from '../src/assets/performance.png';
 
 function App() {
   const toastCtrl = toast;
@@ -14,7 +17,7 @@ function App() {
   const [rented, setRented] = useState(false);
   const [refundAmount, setRefundAmount] = useState(0);
   const [restock, setRestock] = useState(0);
-
+  const [carChoice, setCarChoice] = useState('sedan');
 // FOR SUCCESS
 async function presentToast(message) {
   toast.success(message, {
@@ -60,9 +63,20 @@ async function presentToastDanger(message) {
 
   const handleRent = async (event) => {
     event.preventDefault();
-    const gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
-    const gasPrice = await web3.eth.getGasPrice();
-    await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+    let gas, gasPrice;
+    if (carChoice === "sedan") {
+      gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
+      gasPrice = await web3.eth.getGasPrice();
+      await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+    } else if (carChoice === "suv") {
+      gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
+      gasPrice = await web3.eth.getGasPrice();
+      await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+    } else if (carChoice === "pickupTruck") {
+      gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
+      gasPrice = await web3.eth.getGasPrice();
+      await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+    }
     setRented(true);
     setRefundAmount(price * rentDays);
   
@@ -70,12 +84,46 @@ async function presentToastDanger(message) {
     presentToast('Car Successfully Rented!');
   };
   
-  
+
   const handleReturn = async (event) => {
     event.preventDefault();
     const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
     const gasPrice = await web3.eth.getGasPrice();
     await carRentalService.methods.returnCar().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
+    setRented(false);
+    setRentDays(1);
+    setRefundAmount(0);
+
+    presentToast('Car Successfully Return!');
+  };
+
+  const handleReturnSedan = async (event) => {
+    event.preventDefault();
+    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
+    const gasPrice = await web3.eth.getGasPrice();
+    await carRentalService.methods.returnCarSedan().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
+    setRented(false);
+    setRentDays(1);
+    setRefundAmount(0);
+
+    presentToast('Car Successfully Return!');
+  };
+  const handleReturnSUV = async (event) => {
+    event.preventDefault();
+    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
+    const gasPrice = await web3.eth.getGasPrice();
+    await carRentalService.methods.returnCarSUV().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
+    setRented(false);
+    setRentDays(1);
+    setRefundAmount(0);
+
+    presentToast('Car Successfully Return!');
+  };
+  const handleReturnTruck = async (event) => {
+    event.preventDefault();
+    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
+    const gasPrice = await web3.eth.getGasPrice();
+    await carRentalService.methods.returnCarTruck().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
     setRented(false);
     setRentDays(1);
     setRefundAmount(0);
@@ -113,17 +161,15 @@ async function presentToastDanger(message) {
         <Container>
           <Navbar.Brand href="#home">Car Rental</Navbar.Brand>
           <Nav className="me-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
-            <Nav.Link href="#features">Features</Nav.Link>
-            <Nav.Link href="#pricing">Pricing</Nav.Link>
+        
           </Nav>
         </Container>
       </Navbar>
       <Container>
         <h1>Car Rental Service</h1>
         <p>Start building your app here.</p>
-        <p className="lead">Rental balance: {web3.utils.fromWei(balance.toString(), 'ether')} ETH</p>
-    <p className="lead">Rental price per day: {web3.utils.fromWei(price.toString(), 'ether')} ETH</p>
+        {/* <p className="lead">Rental balance: {web3.utils.fromWei(balance.toString(), 'ether')} ETH</p>
+    <p className="lead">Rental price per day: {web3.utils.fromWei(price.toString(), 'ether')} ETH</p> */}
     <p className="lead">Available cars: {cars}</p>
     {rented ? (
       <div>
@@ -135,15 +181,58 @@ async function presentToastDanger(message) {
       </div>
     ) : (
       <div>
-        <form onSubmit={handleRent}>
-          <div className="form-group">
-            <label htmlFor="rentDays">Rent car for:</label>
-            <input type="number" className="form-control" id="rentDays" value={rentDays} onChange={(e) => setRentDays(e.target.value)} />
-          </div>
-          <br></br>
-          <button type="submit" className="btn btn-primary">Rent Car</button>
-        </form>
+        
+      <form onSubmit={handleRent}>
+      <div className="form-group" style={{ display: 'flex', gap: '8rem' }}>
+      <div class="card" style={{ width: '18rem' }}>
+        <img src={sedan} class="card-img-top" alt="Sedan" />
+        <div class="card-body">
+          <h5 class="card-title">Car</h5>
+          <p class="card-text">Price : 1ETH/Day</p>
+          <p class="card-text">Brand : Chevrolet</p>
+          <p class="card-text">Model : Spark</p>
+          <p class="card-text">Color : Burning Hot Metallic</p>
+        </div>
       </div>
+      <div class="card" style={{ width: '18rem' }}>
+        <img src={suv} class="card-img-top" alt="SUV" />
+        <div class="card-body">
+          <h5 class="card-title">SUV</h5>
+          <p class="card-text">Price : 2ETH/Day</p>
+          <p class="card-text">Brand : Chevrolet</p>
+          <p class="card-text">Model : Tahoe</p>
+          <p class="card-text">Color : Black</p>
+        </div>
+      </div>
+      <div class="card" style={{ width: '18rem', }}>
+        <img src={performance} class="card-img-top" alt="Pick-up Truck" />
+        <div class="card-body">
+          <h5 class="card-title">Performance</h5>
+          <p class="card-text">Price : 3ETH/Day</p>
+          <p class="card-text">Brand : Chevrolet</p>
+          <p class="card-text">Model : Camaro</p>
+          <p class="card-text">Color : Radiant Red Tincoat</p>
+        </div>
+      </div>
+    </div>
+        <div className="form-group">
+          <label htmlFor="carChoice">Choose a Car:</label>
+          <select className="form-control" id="carChoice" value={carChoice} onChange={(e) => setCarChoice(e.target.value)}>
+            <option value="sedan">Sedan</option>
+            <option value="pickupTruck">SUV</option>
+            <option value="suv">Performance</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="rentDays">Rent car for:</label>
+          <input type="number" className="form-control" id="rentDays" value={rentDays} onChange={(e) => setRentDays(e.target.value)} />
+        </div>
+        <br></br>
+        <button type="submit" className="btn btn-primary">Rent Car</button>
+      </form>
+    </div>
+    
+      
     )}
     <div className="col-md-6">
       <h2>Add new cars:</h2>
