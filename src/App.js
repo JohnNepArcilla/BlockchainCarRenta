@@ -72,7 +72,7 @@ async function presentToastDanger(message) {
       gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
       gasPrice = await web3.eth.getGasPrice();
       await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
-    } else if (carChoice === "pickupTruck") {
+    } else if (carChoice === "performance") {
       gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
       gasPrice = await web3.eth.getGasPrice();
       await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
@@ -219,8 +219,8 @@ async function presentToastDanger(message) {
           <label htmlFor="carChoice">Choose a Car:</label>
           <select className="form-control" id="carChoice" value={carChoice} onChange={(e) => setCarChoice(e.target.value)}>
             <option value="sedan">Sedan</option>
-            <option value="pickupTruck">SUV</option>
-            <option value="suv">Performance</option>
+            <option value="suv">SUV</option>
+            <option value="performance">Performance</option>
           </select>
         </div>
         <div className="form-group">
