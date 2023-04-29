@@ -1,5 +1,5 @@
 import Web3 from "web3";
-import CarRentalService from "../../src/contracts/CarRentalService.json";
+import CarRentalService from "./CarRentalService.json";
 
 const options = {
   contracts: [CarRentalService],

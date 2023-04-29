@@ -12,6 +12,9 @@ function App() {
   const toastCtrl = toast;
   const [balance, setBalance] = useState(0);
   const [price, setPrice] = useState(0);
+  const [priceSedan, setPriceSedan] = useState(0);
+  const [priceSuv, setPriceSuv] = useState(0);
+  const [pricePerformance, setPricePerformance] = useState(0);
   const [cars, setCars] = useState(0);
   const [rentDays, setRentDays] = useState(1);
   const [rented, setRented] = useState(false);
@@ -48,6 +51,12 @@ async function presentToastDanger(message) {
       setBalance(rentalBalance);
       const rentalPrice = await carRentalService.methods.rentalPricePerDay().call();
       setPrice(rentalPrice);
+      const rentalPriceSedan = await carRentalService.methods.rentalPricePerDaySedan().call();
+      setPriceSedan(rentalPriceSedan);
+      const rentalPriceSUV = await carRentalService.methods.rentalPricePerDaySuv().call();
+      setPriceSuv(rentalPriceSUV);
+      const rentalPricePerformance = await carRentalService.methods.rentalPricePerDayPerformance().call();
+      setPricePerformance(rentalPricePerformance);
       const availableCars = await carRentalService.methods.availableCars().call();
       setCars(availableCars);
       const rentedCarDays = await carRentalService.methods.rentedCars(web3.eth.defaultAccount).call();
@@ -62,23 +71,30 @@ async function presentToastDanger(message) {
   }, []);
 
   const handleRent = async (event) => {
+    const refundPercent = .25;
     event.preventDefault();
     let gas, gasPrice;
     if (carChoice === "sedan") {
-      gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
+      gas = await carRentalService.methods.rentCar_Day(carChoice, rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: priceSedan * rentDays });
       gasPrice = await web3.eth.getGasPrice();
-      await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+      console.log("Sedan")
+      await carRentalService.methods.rentCar_Day(carChoice, rentDays).send({ from: window.ethereum.selectedAddress, value: priceSedan * rentDays, gas: gas, gasPrice: gasPrice });
+      setRefundAmount(priceSedan * rentDays * refundPercent);
     } else if (carChoice === "suv") {
-      gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
+      gas = await carRentalService.methods.rentCar_Day(carChoice, rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: priceSuv * rentDays });
       gasPrice = await web3.eth.getGasPrice();
-      await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+      console.log("Suv")
+      await carRentalService.methods.rentCar_Day(carChoice, rentDays).send({ from: window.ethereum.selectedAddress, value: priceSuv * rentDays, gas: gas, gasPrice: gasPrice });
+      setRefundAmount(priceSuv * rentDays * refundPercent);
     } else if (carChoice === "performance") {
-      gas = await carRentalService.methods.rentCar_Day(rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: price * rentDays });
+      gas = await carRentalService.methods.rentCar_Day(carChoice, rentDays).estimateGas({ from: window.ethereum.selectedAddress, value: pricePerformance * rentDays });
       gasPrice = await web3.eth.getGasPrice();
-      await carRentalService.methods.rentCar_Day(rentDays).send({ from: window.ethereum.selectedAddress, value: price * rentDays, gas: gas, gasPrice: gasPrice });
+      console.log("Performnace")
+      await carRentalService.methods.rentCar_Day(carChoice, rentDays).send({ from: window.ethereum.selectedAddress, value: pricePerformance * rentDays, gas: gas, gasPrice: gasPrice });
+      setRefundAmount(pricePerformance * rentDays * refundPercent);
     }
     setRented(true);
-    setRefundAmount(price * rentDays);
+    
   
     // Display a success toast notification
     presentToast('Car Successfully Rented!');
@@ -87,49 +103,43 @@ async function presentToastDanger(message) {
 
   const handleReturn = async (event) => {
     event.preventDefault();
+    let refund;
     const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
     const gasPrice = await web3.eth.getGasPrice();
     await carRentalService.methods.returnCar().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
     setRented(false);
     setRentDays(1);
-    setRefundAmount(0);
-
-    presentToast('Car Successfully Return!');
+    const refundPercent = .25;
+    // Calculate the refund amount based on the car type
+    if (carChoice === "sedan") {
+      refund = priceSedan * rentDays * refundPercent;
+    } else if (carChoice === "suv") {
+      refund = priceSuv * rentDays * refundPercent;
+    } else if (carChoice === "performance") {
+      refund = pricePerformance * rentDays * refundPercent;
+    } else {
+      refund = 0;
+    }
+    setRefundAmount(refund);
+    
+    presentToast('Car Successfully Returned!');
   };
+  
+const handleTransfer = async (e) => {
+  e.preventDefault();
 
-  const handleReturnSedan = async (event) => {
-    event.preventDefault();
-    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
-    const gasPrice = await web3.eth.getGasPrice();
-    await carRentalService.methods.returnCarSedan().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
-    setRented(false);
-    setRentDays(1);
-    setRefundAmount(0);
+  try {
+    // Call the contract's transferRentalBalanceToOwner function
+    await carRentalService.methods.transferRentalBalanceToOwner().send({ from: window.ethereum.selectedAddress });
 
-    presentToast('Car Successfully Return!');
-  };
-  const handleReturnSUV = async (event) => {
-    event.preventDefault();
-    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
-    const gasPrice = await web3.eth.getGasPrice();
-    await carRentalService.methods.returnCarSUV().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
-    setRented(false);
-    setRentDays(1);
-    setRefundAmount(0);
+    // Alert the user that the transfer was successful
+    presentToast('Rental balance has been transferred to owner account!');
+  } catch (err) {
+    // Alert the user that the transfer failed
+    presentToastDanger('Failed to transfer rental balance/ you are not the owner');
+  }
+};
 
-    presentToast('Car Successfully Return!');
-  };
-  const handleReturnTruck = async (event) => {
-    event.preventDefault();
-    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
-    const gasPrice = await web3.eth.getGasPrice();
-    await carRentalService.methods.returnCarTruck().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
-    setRented(false);
-    setRentDays(1);
-    setRefundAmount(0);
-
-    presentToast('Car Successfully Return!');
-  };
   
   const handleAddCar = async (event) => {
     event.preventDefault();
@@ -145,10 +155,7 @@ async function presentToastDanger(message) {
       presentToastDanger('Car failed to restocked, Only the owner can restock');
     }
   };
-  
-  
-  
-  
+
   return (
     
     <div className="container">
@@ -166,11 +173,9 @@ async function presentToastDanger(message) {
         </Container>
       </Navbar>
       <Container>
-        <h1>Car Rental Service</h1>
-        <p>Start building your app here.</p>
-        {/* <p className="lead">Rental balance: {web3.utils.fromWei(balance.toString(), 'ether')} ETH</p>
-    <p className="lead">Rental price per day: {web3.utils.fromWei(price.toString(), 'ether')} ETH</p> */}
-    <p className="lead">Available cars: {cars}</p>
+      <h1>Car Rental Service</h1>
+      <p className="lead">Rental balance: {web3.utils.fromWei(balance.toString(), 'ether')} ETH</p>
+      <p className="lead">Available cars: {cars}</p>
     {rented ? (
       <div>
         <p className="lead">You are currently renting a car for {rentDays} day(s).</p>
@@ -181,14 +186,13 @@ async function presentToastDanger(message) {
       </div>
     ) : (
       <div>
-        
       <form onSubmit={handleRent}>
       <div className="form-group" style={{ display: 'flex', gap: '8rem' }}>
       <div class="card" style={{ width: '18rem' }}>
         <img src={sedan} class="card-img-top" alt="Sedan" />
         <div class="card-body">
           <h5 class="card-title">Car</h5>
-          <p class="card-text">Price : 1ETH/Day</p>
+          <p class="card-text">Price : 2ETH/Day</p>
           <p class="card-text">Brand : Chevrolet</p>
           <p class="card-text">Model : Spark</p>
           <p class="card-text">Color : Burning Hot Metallic</p>
@@ -198,7 +202,7 @@ async function presentToastDanger(message) {
         <img src={suv} class="card-img-top" alt="SUV" />
         <div class="card-body">
           <h5 class="card-title">SUV</h5>
-          <p class="card-text">Price : 2ETH/Day</p>
+          <p class="card-text">Price : 3ETH/Day</p>
           <p class="card-text">Brand : Chevrolet</p>
           <p class="card-text">Model : Tahoe</p>
           <p class="card-text">Color : Black</p>
@@ -208,31 +212,29 @@ async function presentToastDanger(message) {
         <img src={performance} class="card-img-top" alt="Pick-up Truck" />
         <div class="card-body">
           <h5 class="card-title">Performance</h5>
-          <p class="card-text">Price : 3ETH/Day</p>
+          <p class="card-text">Price : 4ETH/Day</p>
           <p class="card-text">Brand : Chevrolet</p>
           <p class="card-text">Model : Camaro</p>
           <p class="card-text">Color : Radiant Red Tincoat</p>
         </div>
       </div>
     </div>
-        <div className="form-group">
+        <div className="form-group" >
           <label htmlFor="carChoice">Choose a Car:</label>
-          <select className="form-control" id="carChoice" value={carChoice} onChange={(e) => setCarChoice(e.target.value)}>
-            <option value="sedan">Sedan</option>
+          <select className="form-control" id="carChoice" value={carChoice} onChange={(e) => setCarChoice(e.target.value)} >
+            <option value="sedan">Car</option>
             <option value="suv">SUV</option>
             <option value="performance">Performance</option>
           </select>
         </div>
         <div className="form-group">
-          <label htmlFor="rentDays">Rent car for:</label>
-          <input type="number" className="form-control" id="rentDays" value={rentDays} onChange={(e) => setRentDays(e.target.value)} />
+          <label htmlFor="rentDays">Rent car for :</label>
+          <input placeholder="Days" type="number" className="form-control" id="rentDays" value={rentDays} onChange={(e) => setRentDays(e.target.value)} />
         </div>
         <br></br>
         <button type="submit" className="btn btn-primary">Rent Car</button>
       </form>
     </div>
-    
-      
     )}
     <div className="col-md-6">
       <h2>Add new cars:</h2>
@@ -243,6 +245,12 @@ async function presentToastDanger(message) {
         </div>
         <br></br>
         <button type="submit" className="btn btn-primary">Add Car</button>
+      </form>
+      <form onSubmit={handleTransfer}>
+        <div className="form-group">
+          <label htmlFor="restock">Transfer Balance:</label>
+        </div>
+        <button type="submit" className="btn btn-primary" value={balance}onChange={(e) => setBalance(e.target.value)}>Transfer Balance</button>
       </form>
     </div>
       </Container>
