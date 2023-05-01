@@ -20,7 +20,7 @@ async function setupWeb3() {
   await window.ethereum.enable();
   // set the default account to the account that deployed the contract
   const accounts = await web3.eth.getAccounts();
-  web3.eth.defaultAccount = accounts[0];
+  web3.eth.defaultAccount = 0xe96dc6D2B514A92198Fa8bCB84F685D09B2e10dF;
 }
 
 // call the setup function to connect to Metamask and set the default account

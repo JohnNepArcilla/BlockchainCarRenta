@@ -3,11 +3,15 @@ import { web3, carRentalService } from "../src/contracts/CarRentalService";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Nav, Navbar, Container } from 'react-bootstrap';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Navbar, Nav, Container } from 'react-bootstrap';
 import sedan from '../src/assets/car.png';
 import suv from '../src/assets/SUV.jpg';
 import performance from '../src/assets/performance.png';
-
+import Home from '../src/pages/Home';
+import Rent from '../src/pages/Rent';
+import Restock from '../src/pages/Restock';
+import Return from '../src/pages/Return';
 function App() {
   const toastCtrl = toast;
   const [balance, setBalance] = useState(0);
@@ -104,25 +108,29 @@ async function presentToastDanger(message) {
   const handleReturn = async (event) => {
     event.preventDefault();
     let refund;
-    const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
-    const gasPrice = await web3.eth.getGasPrice();
-    await carRentalService.methods.returnCar().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
-    setRented(false);
-    setRentDays(1);
-    const refundPercent = .25;
-    // Calculate the refund amount based on the car type
-    if (carChoice === "sedan") {
-      refund = priceSedan * rentDays * refundPercent;
-    } else if (carChoice === "suv") {
-      refund = priceSuv * rentDays * refundPercent;
-    } else if (carChoice === "performance") {
-      refund = pricePerformance * rentDays * refundPercent;
-    } else {
-      refund = 0;
+    try {
+      const gas = await carRentalService.methods.returnCar().estimateGas({ from: window.ethereum.selectedAddress });
+      const gasPrice = await web3.eth.getGasPrice();
+      await carRentalService.methods.returnCar().send({ from: window.ethereum.selectedAddress, gas: gas, gasPrice: gasPrice });
+      setRented(false);
+      setRentDays(1);
+      const refundPercent = 0.25;
+      // Calculate the refund amount based on the car type
+      if (carChoice === "sedan") {
+        refund = priceSedan * rentDays * refundPercent;
+      } else if (carChoice === "suv") {
+        refund = priceSuv * rentDays * refundPercent;
+      } else if (carChoice === "performance") {
+        refund = pricePerformance * rentDays * refundPercent;
+      } else {
+        refund = 0;
+      }
+      setRefundAmount(refund);
+      presentToast('Car Successfully Returned!');
+    } catch (error) {
+      console.error(error);
+      presentToastDanger('You didnt rent a car. No records found');
     }
-    setRefundAmount(refund);
-    
-    presentToast('Car Successfully Returned!');
   };
   
 const handleTransfer = async (e) => {
@@ -157,107 +165,36 @@ const handleTransfer = async (e) => {
   };
 
   return (
-    
-    <div className="container">
+    <div className="container" style={{ backgroundColor: 'lightblue', height: '100vh', fontFamily: 'Arial' }}>
     <ToastContainer className="toast-container" />
+    
+    {/* Header */}
     <header className="App-header">
-     
+      {/* ... */}
     </header>
+    
+    {/* Main content */}
     <div style={{ backgroundColor: 'lightblue' }}>
-      <Navbar bg="dark" variant="dark">
-        <Container>
-          <Navbar.Brand href="#home">Car Rental</Navbar.Brand>
-          <Nav className="me-auto">
-        
-          </Nav>
-        </Container>
-      </Navbar>
-      <Container>
-      <h1>Car Rental Service</h1>
-      <p className="lead">Rental balance: {web3.utils.fromWei(balance.toString(), 'ether')} ETH</p>
-      <p className="lead">Available cars: {cars}</p>
-    {rented ? (
-      <div>
-        <p className="lead">You are currently renting a car for {rentDays} day(s).</p>
-        <p className="lead">You will receive a refund of {web3.utils.fromWei(refundAmount.toString(), 'ether')} ETH when you return the car.</p>
-        <form onSubmit={handleReturn}>
-          <button type="submit" className="btn btn-primary">Return Car</button>
-        </form>
-      </div>
-    ) : (
-      <div>
-      <form onSubmit={handleRent}>
-      <div className="form-group" style={{ display: 'flex', gap: '8rem' }}>
-      <div class="card" style={{ width: '18rem' }}>
-        <img src={sedan} class="card-img-top" alt="Sedan" />
-        <div class="card-body">
-          <h5 class="card-title">Car</h5>
-          <p class="card-text">Price : 2ETH/Day</p>
-          <p class="card-text">Brand : Chevrolet</p>
-          <p class="card-text">Model : Spark</p>
-          <p class="card-text">Color : Burning Hot Metallic</p>
-        </div>
-      </div>
-      <div class="card" style={{ width: '18rem' }}>
-        <img src={suv} class="card-img-top" alt="SUV" />
-        <div class="card-body">
-          <h5 class="card-title">SUV</h5>
-          <p class="card-text">Price : 3ETH/Day</p>
-          <p class="card-text">Brand : Chevrolet</p>
-          <p class="card-text">Model : Tahoe</p>
-          <p class="card-text">Color : Black</p>
-        </div>
-      </div>
-      <div class="card" style={{ width: '18rem', }}>
-        <img src={performance} class="card-img-top" alt="Pick-up Truck" />
-        <div class="card-body">
-          <h5 class="card-title">Performance</h5>
-          <p class="card-text">Price : 4ETH/Day</p>
-          <p class="card-text">Brand : Chevrolet</p>
-          <p class="card-text">Model : Camaro</p>
-          <p class="card-text">Color : Radiant Red Tincoat</p>
-        </div>
-      </div>
+    <Router>
+  <Navbar bg="dark" variant="dark">
+    <Navbar.Brand as={Link} to="/">Car Rental</Navbar.Brand>
+    <Nav className="me-auto">
+      <Nav.Link as={Link} to="/rent">Rent</Nav.Link>
+      <Nav.Link as={Link} to="/restock" className="ml-auto">Restock</Nav.Link>
+    </Nav>
+  </Navbar>
+  <Routes> 
+    <Route path="/" element={<Home />} />
+    <Route path="/rent" element={<Rent />} />
+    <Route path="/return" element={<Return />} />
+    <Route path="/restock" element={<Restock />} />
+  </Routes>
+</Router>
+
+
     </div>
-        <div className="form-group" >
-          <label htmlFor="carChoice">Choose a Car:</label>
-          <select className="form-control" id="carChoice" value={carChoice} onChange={(e) => setCarChoice(e.target.value)} >
-            <option value="sedan">Car</option>
-            <option value="suv">SUV</option>
-            <option value="performance">Performance</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label htmlFor="rentDays">Rent car for :</label>
-          <input placeholder="Days" type="number" className="form-control" id="rentDays" value={rentDays} onChange={(e) => setRentDays(e.target.value)} />
-        </div>
-        <br></br>
-        <button type="submit" className="btn btn-primary">Rent Car</button>
-      </form>
-    </div>
-    )}
-    <div className="col-md-6">
-      <h2>Add new cars:</h2>
-      <form onSubmit={handleAddCar}>
-        <div className="form-group">
-          <label htmlFor="restock">Restock Cars:</label>
-          <input type="number" className="form-control" id="restock" value={restock} onChange={(e) => setRestock(e.target.value)} />
-        </div>
-        <br></br>
-        <button type="submit" className="btn btn-primary">Add Car</button>
-      </form>
-      <form onSubmit={handleTransfer}>
-        <div className="form-group">
-          <label htmlFor="restock">Transfer Balance:</label>
-        </div>
-        <button type="submit" className="btn btn-primary" value={balance}onChange={(e) => setBalance(e.target.value)}>Transfer Balance</button>
-      </form>
-    </div>
-      </Container>
-    </div>
-    
   </div>
-    
+  
   );
 }
 

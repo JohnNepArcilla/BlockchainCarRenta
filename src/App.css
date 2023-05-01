@@ -29,6 +29,7 @@
 
 .App-link {
   color: #61dafb;
+  height: '100';
 }
 
 @keyframes App-logo-spin {
@@ -54,4 +55,10 @@
 .toast-danger {
   background-color: #db4437;
   color: white;
+}
+@font-face {
+  font-family: 'Gilroy-SemiBold';
+  src: url('../assets/fonts/Gilroy-SemiBold.woff2') format('woff2'),
+       url('../assets/fonts/Gilroy-SemiBold.woff') format('woff'),
+       url('../assets/fonts/Gilroy-SemiBold.ttf') format('truetype');
 }
