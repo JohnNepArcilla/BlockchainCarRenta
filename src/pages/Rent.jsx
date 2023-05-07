@@ -261,8 +261,7 @@ function Rent() {
                   You are currently renting a car for {rentDays} day(s).
                 </p>
                 <p className="lead">
-                  You will receive a refund of{" "}
-                  {web3.utils.fromWei(refundAmount.toString(), "ether")} ETH
+                  You will receive a refund
                   when you return the car.
                 </p>
                 <form onSubmit={handleReturn}>

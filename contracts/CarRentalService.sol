@@ -62,11 +62,12 @@ contract CarRentalService {
         availableCars -= 1;
     }
 
-   function returnCar() public {
+ function returnCar() public {
     require(rentedCars[msg.sender] > 0, "You haven't rented any cars.");
     
     uint daysRented = rentedCars[msg.sender];
     uint refundAmount;
+    
     if (daysRented <= 2) {
         refundAmount = daysRented * rentalPricePerDay;
     } else {
@@ -79,11 +80,12 @@ contract CarRentalService {
         }
     }
     
-    customerBalance[msg.sender] -= refundAmount;
     rentedCars[msg.sender] = 0;
     availableCars += 1;
-    
+
+    // transfer the refund amount from contract to the caller address
     payable(msg.sender).transfer(refundAmount);
 }
+
 
 }
